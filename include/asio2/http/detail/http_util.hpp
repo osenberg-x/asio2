@@ -401,9 +401,9 @@ namespace boost::beast::http
 				std::string_view schema(&url[
 					u.field_data[(int)http::parses::url_fields::UF_SCHEMA].off],
 					u.field_data[(int)http::parses::url_fields::UF_SCHEMA].len);
-				if (asio2::iequals(schema, "http"))
+				if (asio2::iequals(schema, "http") || asio2::iequals(schema, "ws"))
 					return std::string_view{ "80" };
-				if (asio2::iequals(schema, "https"))
+				if (asio2::iequals(schema, "https") || asio2::iequals(schema, "wss"))
 					return std::string_view{ "443" };
 			}
 

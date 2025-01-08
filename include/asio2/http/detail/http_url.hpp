@@ -128,9 +128,9 @@ namespace boost::beast::http
 		inline std::string_view get_default_port() const noexcept
 		{
 			std::string_view schema = this->schema();
-			if (asio2::iequals(schema, "http"))
+			if (asio2::iequals(schema, "http") || asio2::iequals(schema, "ws"))
 				return std::string_view{ "80" };
-			if (asio2::iequals(schema, "https"))
+			if (asio2::iequals(schema, "https") || asio2::iequals(schema, "wss"))
 				return std::string_view{ "443" };
 			return std::string_view{ "80" };
 		}
