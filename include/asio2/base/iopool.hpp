@@ -31,8 +31,9 @@
 #include <asio2/base/define.hpp>
 #include <asio2/base/log.hpp>
 
-#include <asio2/base/detail/util.hpp>
 #include <asio2/base/detail/shared_mutex.hpp>
+#include <asio2/base/detail/util.hpp>
+#include <asio2/util/thread_priority.hpp>
 
 namespace asio2::detail
 {
@@ -509,48 +510,56 @@ namespace asio2::detail
 					try
 					{
 				#endif
-						iot->context().run();
-				#if !defined(ASIO_NO_EXCEPTIONS) && !defined(BOOST_ASIO_NO_EXCEPTIONS)
-					}
-					catch (system_error const& e)
-					{
-						std::ignore = e;
+#ifdef _WIN32
+                                          // THREAD_PRIORITY_HIGHEST
+                                          set_thread_priority(
+                                              THREAD_PRIORITY_TIME_CRITICAL);
+#elif __linux__
+                                        set_thread_priority(SCHED_RR, 10);
+#endif
+                                          iot->context().run();
+#if !defined(ASIO_NO_EXCEPTIONS) && !defined(BOOST_ASIO_NO_EXCEPTIONS)
+                                        } catch (system_error const &e) {
+                                          std::ignore = e;
 
-						ASIO2_LOG_ERROR("fatal exception in io_context::run:1: {}", e.what());
+                                          ASIO2_LOG_ERROR(
+                                              "fatal exception in "
+                                              "io_context::run:1: {}",
+                                              e.what());
 
-						ASIO2_ASSERT(false);
-					}
-					catch (std::exception const& e)
-					{
-						std::ignore = e;
+                                          ASIO2_ASSERT(false);
+                                        } catch (std::exception const &e) {
+                                          std::ignore = e;
 
-						ASIO2_LOG_ERROR("fatal exception in io_context::run:2: {}", e.what());
+                                          ASIO2_LOG_ERROR(
+                                              "fatal exception in "
+                                              "io_context::run:2: {}",
+                                              e.what());
 
-						ASIO2_ASSERT(false);
-					}
-					catch (...)
-					{
-						ASIO2_LOG_ERROR("fatal exception in io_context::run:3");
+                                          ASIO2_ASSERT(false);
+                                        } catch (...) {
+                                          ASIO2_LOG_ERROR("fatal exception in "
+                                                          "io_context::run:3");
 
-						ASIO2_ASSERT(false);
-					}
-				#endif
+                                          ASIO2_ASSERT(false);
+                                        }
+#endif
 
-					// memory leaks occur when SSL is used in multithreading
-					// https://github.com/chriskohlhoff/asio/issues/368
-				#if defined(ASIO2_ENABLE_SSL) || defined(ASIO2_USE_SSL)
-					OPENSSL_thread_stop();
-				#endif
+                                        // memory leaks occur when SSL is used
+                                        // in multithreading
+                                        // https://github.com/chriskohlhoff/asio/issues/368
+#if defined(ASIO2_ENABLE_SSL) || defined(ASIO2_USE_SSL)
+                                        OPENSSL_thread_stop();
+#endif
 				});
-			}
+                        }
 
-			for (std::size_t i = 0; i < this->iots_.size(); ++i)
-			{
-				promises[i].get_future().wait();
-			}
+                        for (std::size_t i = 0; i < this->iots_.size(); ++i) {
+                          promises[i].get_future().wait();
+                        }
 
-		#if defined(_DEBUG) || defined(DEBUG)
-			for (std::size_t i = 0; i < this->iots_.size(); ++i)
+#if defined(_DEBUG) || defined(DEBUG)
+                        for (std::size_t i = 0; i < this->iots_.size(); ++i)
 			{
 				ASIO2_ASSERT(this->iots_[i]->get_thread_id() == this->threads_[i].get_id());
 			}
