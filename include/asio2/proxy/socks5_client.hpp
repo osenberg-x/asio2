@@ -95,7 +95,7 @@ namespace asio2::detail
 		{
 			derived_t& derive = this->derived();
 
-			bool f = executor_t::template async_start(
+                        bool f = executor_t::template async_start<Args...>(
 				std::forward<String>(host), std::forward<StrOrInt>(port), std::forward<Args>(args)...);
 
 			derive.connect_finish_timer_->expires_after(f ?

@@ -275,7 +275,7 @@ namespace asio2::detail
 			inline static auto make_callback(derive_t& derive, Callback&& cb)
 			{
 				using fun_traits_type = function_traits<std::remove_cv_t<std::remove_reference_t<Callback>>>;
-				return async_call_op<derive_t>::template make_callback_argc(
+                                return async_call_op<derive_t>::template make_callback_argc<derive_t, std::decay_t<Callback>, fun_traits_type::argc>(
 					derive, async_call_op<derive_t>::to_safe_callback(std::forward<Callback>(cb)),
 					std::integral_constant<int, fun_traits_type::argc>{});
 			}
